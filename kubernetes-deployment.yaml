@@ -6,63 +6,62 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kong-config
+  name: nginx-conf
   namespace: idp
 data:
-  kong.yml: |
-    _format_version: "3.0"
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log;
 
-    services:
-    - name: adminer
-      url: http://adminer-service:8080
-      routes:
-      - name: adminer
-        paths:
-        - /adminer
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        server {
+            listen 80;
+            server_name localhost;
+
+            location /adminer {
+                proxy_pass http://adminer-service:8080;
+            }
+        }
+    }
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kong-deployment
+  name: nginx-deployment
   namespace: idp
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: kong
+      app: nginx
+  replicas: 1
   template:
     metadata:
       labels:
-        app: kong
+        app: nginx
     spec:
       containers:
-      - name: kong-container
-        image: kong:3.6.1
-        env:
-        - name: KONG_DATABASE
-          value: "off"
-        - name: KONG_DECLARATIVE_CONFIG
-          value: "/usr/local/kong/declarative/kong.yml"
-        - name: KONG_PROXY_ACCESS_LOG
-          value: "/dev/stdout"
-        - name: KONG_ADMIN_ACCESS_LOG
-          value: "/dev/stdout"
-        - name: KONG_PROXY_ERROR_LOG
-          value: "/dev/stderr"
-        - name: KONG_ADMIN_ERROR_LOG
-          value: "/dev/stderr"
-        - name: KONG_ADMIN_LISTEN
-          value: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
+      - name: nginx
+        image: nginx:1.25.5
         ports:
-        - name: kong-port
-          containerPort: 8000
+        - name: nginx-port
+          containerPort: 80
         volumeMounts:
-        - name: kong-config
-          mountPath: /usr/local/kong/declarative
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
       volumes:
-      - name: kong-config
+      - name: nginx-conf
         configMap:
-          name: kong-config
+          name: nginx-conf
+          items:
+            - key: nginx.conf
+              path: nginx.conf
       restartPolicy: Always
 ---
 apiVersion: apps/v1
@@ -119,15 +118,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kong-service
+  name: nginx-service
   namespace: idp
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
-    app: kong
+    app: nginx
   ports:
-  - port: 80
-    targetPort: kong-port
+  - port: 30000
+    targetPort: nginx-port
     nodePort: 30000
 ---
 apiVersion: v1
