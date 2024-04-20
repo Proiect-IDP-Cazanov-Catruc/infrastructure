@@ -26,6 +26,23 @@ data:
             location /adminer {
                 proxy_pass http://adminer-service:8080;
             }
+
+            location ^~ /api/v1/auth {
+                proxy_pass http://auth-service:10001;
+            }
+            location ^~ /api/v1/users {
+                proxy_pass http://auth-service:10001;
+            }
+
+            location ^~ /api/v1/admin {
+                proxy_pass http://business-logic-service:8080;
+            }
+            location ^~ /api/v1/manager {
+                proxy_pass http://business-logic-service:8080;
+            }
+            location ^~ /api/v1/store {
+                proxy_pass http://business-logic-service:8080;
+            }
         }
     }
 ---
@@ -89,6 +106,141 @@ spec:
           containerPort: 8080
       restartPolicy: Always
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-deployment
+  namespace: idp
+spec:
+  selector:
+    matchLabels:
+      app: auth
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+      - name: auth
+        image: 2001slavic/idp-proiect-auth-service:latest
+        imagePullPolicy: Always
+        env:
+        - name: IO_SERVICE_URL
+          value: http://io-service:10000
+        - name: AUTH_SERVICE_PORT
+          value: "10001"
+        - name: IO_SERVICE_USERS_ENDPOINT
+          value: /api/v1/users
+        - name: IO_SERVICE_USERS_FIND_BY_EMAIL
+          value: /email
+        - name: IO_SERVICE_USERS_REGISTER
+          value: /register
+        - name: IO_SERVICE_USERS_VALIDATE_LOGIN
+          value: /validate-login
+        - name: IO_SERVICE_TOKENS_ENDPOINT
+          value: /api/v1/tokens
+        - name: IO_SERVICE_TOKENS_LOGOUT
+          value: /logout
+        - name: IO_SERVICE_TOKENS_REVOKE
+          value: /revoke
+        - name: IO_SERVICE_TOKENS_IS_REFRESH
+          value: /is_refresh
+        ports:
+        - name: auth-port
+          containerPort: 10001
+
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: business-logic-deployment
+  namespace: idp
+spec:
+  selector:
+    matchLabels:
+      app: business-logic
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: business-logic
+    spec:
+      containers:
+      - name: business-logic
+        image: 2001slavic/idp-proiect-business-logic:latest
+        imagePullPolicy: Always
+        env:
+        - name: IO_SERVICE_URL
+          value: http://io-service:10000
+        - name: AUTH_SERVICE_URL
+          value: http://auth-service:10001
+        - name: BUSINESS_LOGIC_SERVICE_PORT
+          value: "8080"
+        - name: IO_SERVICE_USERS_ENDPOINT
+          value: /api/v1/users
+        - name: IO_SERVICE_USERS_FIND_BY_EMAIL
+          value: /email
+        - name: IO_SERVICE_USERS_MANAGER
+          value: /manager
+        - name: IO_SERVICE_PRODUCTS_ENDPOINT
+          value: /api/v1/products
+        - name: IO_SERVICE_CATEGORIES_ENDPOINT
+          value: /api/v1/categories
+        - name: IO_SERVICE_ORDERS_ENDPOINT
+          value: /api/v1/orders
+        - name: AUTH_SERVICE_USERS_ME_ENDPOINT
+          value: /api/v1/users/me
+        ports:
+        - name: business-port
+          containerPort: 8080
+
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: io-deployment
+  namespace: idp
+spec:
+  selector:
+    matchLabels:
+      app: io
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: io
+    spec:
+      containers:
+      - name: io
+        image: 2001slavic/idp-proiect-io-service:latest
+        imagePullPolicy: Always
+        env:
+        - name: DATABASE_USERNAME
+          value: admin
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: superUserPassword
+        - name: DATABASE_NAME
+          value: store
+        - name: IO_SERVICE_PORT
+          value: "10000"
+        - name: IO_SERVICE_DRIVER_CLASS_NAME
+          value: org.postgresql.Driver
+        - name: IO_SERVICE_DATASOURCE_URL
+          value: jdbc:postgresql://db-kubegres:5432/${DATABASE_NAME}
+        - name: IO_SERVICE_DATABASE
+          value: postgresql
+        ports:
+        - name: io-port
+          containerPort: 10000
+
+      restartPolicy: Always
+---
 apiVersion: kubegres.reactive-tech.io/v1
 kind: Kubegres
 metadata:
@@ -142,3 +294,41 @@ spec:
     - port: 8080
       targetPort: adminer-port
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: idp
+spec:
+  type: ClusterIP
+  selector:
+    app: auth
+  ports:
+    - port: 10001
+      targetPort: auth-port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: business-logic-service
+  namespace: idp
+spec:
+  type: ClusterIP
+  selector:
+    app: business-logic
+  ports:
+    - port: 8080
+      targetPort: business-port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: io-service
+  namespace: idp
+spec:
+  type: ClusterIP
+  selector:
+    app: io
+  ports:
+    - port: 10000
+      targetPort: io-port
