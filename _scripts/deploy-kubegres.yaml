@@ -1,0 +1,25 @@
+apiVersion: kubegres.reactive-tech.io/v1
+kind: Kubegres
+metadata:
+  name: db-kubegres
+  namespace: idp
+spec:
+  replicas: 2
+  image: postgres:16.2
+  database:
+    size: 200Mi
+  env:
+    - name: POSTGRES_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: db-secret
+          key: superUserPassword
+    - name: POSTGRES_REPLICATION_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: db-secret
+          key: replicationUserPassword
+    - name: POSTGRES_DB
+      value: store
+    - name: POSTGRES_USER
+      value: admin

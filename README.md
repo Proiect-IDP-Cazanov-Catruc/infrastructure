@@ -14,5 +14,10 @@ Se asteapta pana toate obiectele vor fi ready:
 kubectl get all -n kubegres-system
 ```
 
+[Portainer](https://www.portainer.io/):
+```bash
+kubectl apply -n portainer -f https://downloads.portainer.io/ce2-19/portainer.yaml
+```
+
 ## Testare
 Testat pe cluster `minikube` local cu 2 noduri.

@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: io-deployment
+  namespace: idp
+spec:
+  selector:
+    matchLabels:
+      app: io
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: io
+    spec:
+      containers:
+      - name: io
+        image: 2001slavic/idp-proiect-io-service:latest
+        imagePullPolicy: Always
+        env:
+        - name: DATABASE_USERNAME
+          value: admin
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: superUserPassword
+        - name: DATABASE_NAME
+          value: store
+        - name: IO_SERVICE_PORT
+          value: "10000"
+        - name: IO_SERVICE_DRIVER_CLASS_NAME
+          value: org.postgresql.Driver
+        - name: IO_SERVICE_DATASOURCE_URL
+          value: jdbc:postgresql://db-kubegres:5432/${DATABASE_NAME}
+        - name: IO_SERVICE_DATABASE
+          value: postgresql
+        ports:
+        - name: io-port
+          containerPort: 10000
+
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: io-service
+  namespace: idp
+spec:
+  type: ClusterIP
+  selector:
+    app: io
+  ports:
+    - port: 10000
+      targetPort: io-port
