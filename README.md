@@ -20,4 +20,8 @@ kubectl apply -n portainer -f https://downloads.portainer.io/ce2-19/portainer.ya
 ```
 
 ## Testare
+Deployment:
+```powershell
+.\deploy.ps1
+```
 Testat pe cluster `minikube` local cu 2 noduri.
