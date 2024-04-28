@@ -53,3 +53,187 @@ spec:
   ports:
     - port: 10000
       targetPort: io-port
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-io-self
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: io
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: io
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: io
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-auth-io
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: auth
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: io
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: io
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-io-auth
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: io
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: auth
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: auth
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-business-io
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: business-logic
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: io
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: io
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-io-business
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: io
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: business-logic
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: business-logic
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-io-db
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: io
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: db-kubegres
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: db-kubegres
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-db-io
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: db-kubegres
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: io
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: io
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-io-portainer
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: io
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: portainer
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: portainer
+  policyTypes:
+  - Ingress
+  - Egress

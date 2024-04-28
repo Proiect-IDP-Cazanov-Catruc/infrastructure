@@ -44,11 +44,9 @@ data:
               proxy_pass http://business-logic-service:8080;
           }
           location = /portainer {
-              proxy_set_header Host $http_host;
-              return 302 /portainer/;
+              rewrite ^ $scheme://$http_host/portainer/ redirect;
           }
           location /portainer/ {
-              proxy_set_header Host $http_host;
               proxy_pass http://portainer:9000/;
           }
         }
@@ -401,3 +399,321 @@ spec:
               scheme: HTTPS
           resources:
             {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+  namespace: idp
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all-system
+  namespace: idp
+spec:
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system
+  egress:
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-nginx-all
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: nginx
+  ingress:
+    - {}
+  egress:
+    - {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-auth-self
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: auth
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: auth
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: auth
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-business-self
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: business-logic
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: business-logic
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: business-logic
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-adminer-self
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: adminer
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: adminer
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: adminer
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-auth-nginx
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: auth
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: nginx
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: nginx
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-business-nginx
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: business-logic
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: nginx
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: nginx
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-auth-business
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: auth
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: business-logic
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: business-logic
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-business-auth
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: business-logic
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: auth
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: auth
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-adminer-nginx
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: adminer
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: nginx
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: nginx
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-portainer-all
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: portainer
+  ingress:
+    - {}
+  egress:
+    - {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-auth-portainer
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: auth
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: portainer
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: portainer
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-business-portainer
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: business-logic
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: portainer
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: portainer
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-adminer-portainer
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: adminer
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: portainer
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: portainer
+  policyTypes:
+  - Ingress
+  - Egress
