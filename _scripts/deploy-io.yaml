@@ -12,6 +12,8 @@ spec:
     metadata:
       labels:
         app: io
+      annotations:
+        prometheus.io/metric_path: /actuator/prometheus
     spec:
       containers:
       - name: io
@@ -41,6 +43,40 @@ spec:
 
       restartPolicy: Always
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exporter-deployment
+  namespace: idp
+spec:
+  selector:
+    matchLabels:
+      app: exporter
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: exporter
+      annotations:
+        prometheus.io/metric_path: /metrics
+    spec:
+      containers:
+      - name: exporter
+        image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: superUserPassword
+        - name: DATA_SOURCE_NAME
+          value: postgresql://admin:admin@db-kubegres:5432/postgres?sslmode=disable
+        ports:
+        - name: exporter-port
+          containerPort: 9187
+
+      restartPolicy: Always
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -53,6 +89,19 @@ spec:
   ports:
     - port: 10000
       targetPort: io-port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: exporter-service
+  namespace: idp
+spec:
+  type: ClusterIP
+  selector:
+    app: exporter
+  ports:
+    - port: 9187
+      targetPort: exporter-port
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -247,6 +296,121 @@ spec:
   podSelector:
     matchLabels:
       app: io
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: prometheus
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: prometheus
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-exporter-self
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: exporter
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: exporter
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: exporter
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-exporter-db
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: exporter
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: db-kubegres
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: db-kubegres
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-db-exporter
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: db-kubegres
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: exporter
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: exporter
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-exporter-portainer
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: exporter
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: portainer
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: portainer
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-exporter-prometheus
+  namespace: idp
+spec:
+  podSelector:
+    matchLabels:
+      app: exporter
   ingress:
     - from:
       - podSelector:

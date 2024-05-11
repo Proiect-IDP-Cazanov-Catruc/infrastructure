@@ -56,7 +56,10 @@ data:
           proxy_pass http://grafana-service:3000;
         }
 
-        location /prometheus {
+        location = /prometheus {
+          rewrite ^ $scheme://$http_host/prometheus/ redirect;
+        }
+        location /prometheus/ {
           proxy_pass http://prometheus-service:9090/;
         }
       }
@@ -157,33 +160,6 @@ data:
         action: replace
         target_label: kubernetes_name
 
-    - job_name: "kubernetes-ingresses"
-      metrics_path: /probe
-      params:
-        module: [http_2xx]
-      kubernetes_sd_configs:
-        - role: ingress
-      relabel_configs:
-        - source_labels:
-            [
-              __meta_kubernetes_ingress_scheme,
-              __address__,
-              __meta_kubernetes_ingress_path,
-            ]
-          regex: (.+);(.+);(.+)
-          replacement: ${1}://${2}${3}
-          target_label: __param_target
-        - target_label: __address__
-          replacement: blackbox-exporter.example.com:9115
-        - source_labels: [__param_target]
-          target_label: instance
-        - action: labelmap
-          regex: __meta_kubernetes_ingress_label_(.+)
-        - source_labels: [__meta_kubernetes_namespace]
-          target_label: namespace
-        - source_labels: [__meta_kubernetes_ingress_name]
-          target_label: ingress
-
     - job_name: kubernetes-nodes-cadvisor
       scrape_interval: 10s
       scrape_timeout: 10s
@@ -213,6 +189,18 @@ data:
           regex: '^/system\.slice/(.+)\.service$'
           target_label: systemd_service_name
           replacement: '${1}'
+    - job_name: 'kubernetes-pods'
+      kubernetes_sd_configs:
+        - role: pod
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_metric_path]
+          action: replace
+          target_label: __metrics_path__
+          regex: (.+)
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_metric_path]
+          action: drop
+          regex: ''
+
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -313,6 +301,8 @@ spec:
     metadata:
       labels:
         app: auth
+      annotations:
+        prometheus.io/metric_path: /actuator/prometheus
     spec:
       containers:
       - name: auth
@@ -359,6 +349,8 @@ spec:
     metadata:
       labels:
         app: business-logic
+      annotations:
+        prometheus.io/metric_path: /actuator/prometheus
     spec:
       containers:
       - name: business-logic
@@ -416,7 +408,6 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/prometheus
-          # args: ["--web.route-prefix=/prometheus/"]
       volumes:
         - name: config-volume
           configMap:
