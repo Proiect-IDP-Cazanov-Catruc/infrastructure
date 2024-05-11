@@ -1,0 +1,30 @@
+name: Run Azure Login with System-assigned Managed Identity
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          auth-type: IDENTITY
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
+      - uses: azure/aks-set-context@v3
+        with:
+          resource-group: idp-proiect_group
+          cluster-name: idp-proiect
+      - uses: Azure/k8s-deploy@v1
+        with:
+          manifests: |
+            _scripts/deploy-other.yaml
+            _scripts/deploy-kubegres.yaml
+            _scripts/deploy-io.yaml
+      - name: Rollout
+        run: kubectl rollout restart deploy -n idp
