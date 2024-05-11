@@ -11,20 +11,18 @@ jobs:
       - name: Azure login
         uses: azure/login@v2
         with:
-          auth-type: IDENTITY
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          enable-AzPSSession: true
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - uses: azure/aks-set-context@v3
         with:
           resource-group: idp-proiect_group
           cluster-name: idp-proiect
+
       - uses: Azure/k8s-deploy@v1
         with:
           manifests: |
             _scripts/deploy-other.yaml
             _scripts/deploy-kubegres.yaml
             _scripts/deploy-io.yaml
-      - name: Rollout
-        run: kubectl rollout restart deploy -n idp
+    #   - name: Rollout
+    #     run: kubectl rollout restart deploy -n idp
