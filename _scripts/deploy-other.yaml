@@ -56,11 +56,11 @@ data:
           proxy_pass http://grafana-service:3000;
         }
 
-        # location = /prometheus {
-        #   rewrite ^ $scheme://$http_host/prometheus/ redirect;
-        # }
-        # location /prometheus/ {
-        #   proxy_pass http://prometheus-service:9090/;
+        location = /prometheus {
+          rewrite ^ $scheme://$http_host/prometheus/ redirect;
+        }
+        location /prometheus/ {
+          proxy_pass http://prometheus-service:9090/;
         }
       }
     }

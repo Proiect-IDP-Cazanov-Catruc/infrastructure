@@ -31,3 +31,6 @@ jobs:
             _scripts/deploy-other.yaml
             _scripts/deploy-kubegres.yaml
             _scripts/deploy-io.yaml
+
+      - name: Rollout
+        run: kubectl rollout restart deploy -n idp
