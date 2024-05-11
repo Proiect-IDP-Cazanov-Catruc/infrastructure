@@ -28,5 +28,5 @@ jobs:
             _scripts/deploy-other.yaml
             _scripts/deploy-kubegres.yaml
             _scripts/deploy-io.yaml
-    #   - name: Rollout
-    #     run: kubectl rollout restart deploy -n idp
+      - name: Network Policy Cleanup
+        run: kubectl delete -n idp --all networkpolicies.networking.k8s.io

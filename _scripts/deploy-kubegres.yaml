@@ -73,32 +73,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-kubegres-db
-  namespace: kubegres-system
-spec:
-  ingress:
-    - from:
-      - namespaceSelector:
-          matchLabels:
-            kubernetes.io/metadata.name: idp  
-        podSelector:
-          matchLabels:
-            app: db-kubegres
-  egress:
-    - to:
-      - namespaceSelector:
-          matchLabels:
-            kubernetes.io/metadata.name: idp  
-        podSelector:
-          matchLabels:
-            app: db-kubegres
-  policyTypes:
-  - Ingress
-  - Egress
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
   name: allow-db-adminer
   namespace: idp
 spec:
