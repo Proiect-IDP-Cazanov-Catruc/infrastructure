@@ -15,8 +15,8 @@ jobs:
 
       - uses: azure/aks-set-context@v3
         with:
-          resource-group: idp-proiect_group
-          cluster-name: idp-proiect
+          resource-group: idp-resource-group
+          cluster-name: idp-cluster
 
       - uses: Azure/k8s-deploy@v1
         with:
