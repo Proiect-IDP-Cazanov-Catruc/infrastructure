@@ -5,8 +5,8 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
-    runs-on: self-hosted
+  login-and-deploy:
+    runs-on: ubuntu-latest
     steps:
       - name: Azure login
         uses: azure/login@v2
