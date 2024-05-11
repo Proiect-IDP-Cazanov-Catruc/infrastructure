@@ -21,6 +21,9 @@ jobs:
           resource-group: idp-resource-group
           cluster-name: idp-cluster
 
+      - name: Network Policy Cleanup
+        run: kubectl delete -n idp --all networkpolicies.networking.k8s.io
+
       - uses: Azure/k8s-deploy@v1
         with:
           namespace: idp
@@ -28,5 +31,3 @@ jobs:
             _scripts/deploy-other.yaml
             _scripts/deploy-kubegres.yaml
             _scripts/deploy-io.yaml
-      - name: Network Policy Cleanup
-        run: kubectl delete -n idp --all networkpolicies.networking.k8s.io
