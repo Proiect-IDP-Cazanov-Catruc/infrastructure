@@ -4,7 +4,7 @@ metadata:
   name: db-kubegres
   namespace: idp
 spec:
-  replicas: 2
+  replicas: 3
   image: postgres:16.2
   database:
     size: 200Mi

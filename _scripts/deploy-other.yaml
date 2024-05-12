@@ -296,7 +296,7 @@ spec:
   selector:
     matchLabels:
       app: auth
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
@@ -344,7 +344,7 @@ spec:
   selector:
     matchLabels:
       app: business-logic
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
@@ -631,6 +631,7 @@ metadata:
   namespace: idp
 spec:
   selector:
+  replicas: 1
     matchLabels:
       app: grafana
   template:
