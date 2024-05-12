@@ -630,8 +630,8 @@ metadata:
   name: grafana-deployment
   namespace: idp
 spec:
-  selector:
   replicas: 1
+  selector:
     matchLabels:
       app: grafana
   template:
