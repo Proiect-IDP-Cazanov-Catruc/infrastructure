@@ -1,5 +1,11 @@
 # Proiect IDP -- Infrastructura
 
+## Arhitectura
+![Schema arhitecturii](media/architecture.png "Schema arhitecturii")
+
+Au fost create automatizari cu ajutorul Github Actions pentru push pe Docker Hub (pentru serviciile [auth](https://github.com/Proiect-IDP-Cazanov-Catruc/auth-service), [business-logic](https://github.com/Proiect-IDP-Cazanov-Catruc/business-logic-service) si [i/o](https://github.com/Proiect-IDP-Cazanov-Catruc/io-service)).
+
+Github Actions pentru actualizarea parametrilor infrastructurii pe [AKS](https://learn.microsoft.com/en-us/azure/aks/).
 ## Schimbari fata de documentatia initiala
 Am decis sa schimb serviciul folosit pe post de Gateway `Kong` -> `nginx` din
 cauza ca nu am reusit sa setez rutele sa functioneze corect.
